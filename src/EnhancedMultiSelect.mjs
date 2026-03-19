@@ -15,15 +15,7 @@ import { useField, useFetchClient } from '@strapi/strapi/admin';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 
-/* ─── react-select (inline lightweight version) ─── */
-/* We import react-select from the same bundled version strapi uses */
-let ReactSelect;
-try {
-  ReactSelect = await import('react-select').then(m => m.default || m);
-} catch {
-  // fallback: try require
-  try { ReactSelect = require('react-select'); ReactSelect = ReactSelect.default || ReactSelect; } catch { ReactSelect = null; }
-}
+import ReactSelect from 'react-select';
 
 const PLUGIN_API = 'dynamic-enum';
 
@@ -329,23 +321,21 @@ const EnhancedMultiSelect = ({
         jsx(Field.Label, { children: displayLabel }),
 
         // Select
-        ReactSelect
-          ? jsx(StyledSelect, {
-              children: jsx(ReactSelect, {
-                isMulti: true,
-                isSearchable: true,
-                isDisabled: disabled,
-                isLoading: loading,
-                name,
-                options: allOptions,
-                value: selectedSelectValues,
-                onChange: handleChange,
-                placeholder: placeholder || 'Select...',
-                classNamePrefix: 'ms-react-select',
-                noOptionsMessage: () => 'No options. Add one below.',
-              }),
-            })
-          : jsx('div', { children: 'react-select not available' }),
+        jsx(StyledSelect, {
+          children: jsx(ReactSelect, {
+            isMulti: true,
+            isSearchable: true,
+            isDisabled: disabled,
+            isLoading: loading,
+            name,
+            options: allOptions,
+            value: selectedSelectValues,
+            onChange: handleChange,
+            placeholder: placeholder || 'Select...',
+            classNamePrefix: 'ms-react-select',
+            noOptionsMessage: () => 'No options. Add one below.',
+          }),
+        }),
 
         // Add row
         !disabled && jsx(AddRow, {
