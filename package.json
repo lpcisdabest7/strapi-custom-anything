@@ -1,12 +1,16 @@
 {
   "name": "strapi-custom-anything",
-  "version": "1.0.0",
-  "description": "Dynamic enum custom field for Strapi v5 - add enum values without rebuilding",
+  "version": "1.1.0",
+  "description": "Dynamic enum for Strapi v5 - enhances multi-select with dynamic option adding",
   "license": "MIT",
   "author": "lpcisdabest7",
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",
+    "./EnhancedMultiSelect": {
+      "import": "./src/EnhancedMultiSelect.mjs",
+      "default": "./src/EnhancedMultiSelect.mjs"
+    },
     "./strapi-admin": {
       "types": "./dist/admin/src/index.d.ts",
       "source": "./admin/src/index.ts",
@@ -24,22 +28,23 @@
   },
   "files": [
     "dist",
-    "strapi-admin.js",
-    "strapi-server.js"
+    "src",
+    "scripts"
   ],
   "scripts": {
     "build": "strapi-plugin build",
     "watch": "strapi-plugin watch",
-    "verify": "strapi-plugin verify"
+    "verify": "strapi-plugin verify",
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "react-select": "^5.8.0"
   },
   "devDependencies": {
-    "@strapi/sdk-plugin": "^5.2.6",
-    "@strapi/strapi": "^5.0.4",
     "@strapi/design-system": "^2.0.0-rc.14",
     "@strapi/icons": "^2.0.0-rc.14",
+    "@strapi/sdk-plugin": "^5.2.6",
+    "@strapi/strapi": "^5.0.4",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-intl": "^6.0.0",
@@ -59,6 +64,6 @@
     "kind": "plugin",
     "name": "dynamic-enum",
     "displayName": "Dynamic Enum",
-    "description": "A custom field that allows dynamic enum values without rebuilding"
+    "description": "Enhances multi-select with dynamic option adding without rebuild"
   }
 }
