@@ -1,4 +1,4 @@
-export default [
+const admin = [
   {
     method: 'GET',
     path: '/options/:groupKey',
@@ -32,3 +32,7 @@ export default [
     },
   },
 ];
+
+export default {
+  admin,
+};

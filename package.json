@@ -7,10 +7,7 @@
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",
-    "./EnhancedMultiSelect": {
-      "import": "./src/EnhancedMultiSelect.mjs",
-      "default": "./src/EnhancedMultiSelect.mjs"
-    },
+    "./EnhancedMultiSelect": "./src/EnhancedMultiSelect.mjs",
     "./strapi-admin": {
       "types": "./dist/admin/src/index.d.ts",
       "source": "./admin/src/index.ts",
