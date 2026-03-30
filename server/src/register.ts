@@ -4,7 +4,7 @@ const register = ({ strapi }: { strapi: Core.Strapi }) => {
   strapi.customFields.register({
     name: 'dynamic-enum',
     plugin: 'dynamic-enum',
-    type: 'json',
+    type: 'string',
     inputSize: {
       default: 12,
       isResizable: true,

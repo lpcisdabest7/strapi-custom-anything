@@ -1,13 +1,21 @@
 import DynamicEnumIcon from './components/DynamicEnumIcon';
+import EnhancedEnumeration from './components/EnhancedEnumeration';
 
 const PLUGIN_ID = 'dynamic-enum';
 
 export default {
   register(app: any) {
+    // Override built-in enumeration field globally with enhanced version
+    // This adds "+" button to ALL enumeration fields automatically
+    app.addFields({
+      type: 'enumeration',
+      Component: EnhancedEnumeration,
+    });
+
     app.customFields.register({
       name: PLUGIN_ID,
       pluginId: PLUGIN_ID,
-      type: 'json',
+      type: 'string',
       icon: DynamicEnumIcon,
       intlLabel: {
         id: `${PLUGIN_ID}.label`,
@@ -15,7 +23,8 @@ export default {
       },
       intlDescription: {
         id: `${PLUGIN_ID}.description`,
-        defaultMessage: 'Select multiple options with ability to add new values dynamically',
+        defaultMessage:
+          'Single-select with ability to add new enum values dynamically. Merges schema options + DB options.',
       },
       components: {
         Input: async () =>
@@ -27,22 +36,26 @@ export default {
         base: [
           {
             sectionTitle: {
-              id: `${PLUGIN_ID}.section.config`,
-              defaultMessage: 'Configuration',
+              id: `${PLUGIN_ID}.section.enum`,
+              defaultMessage: 'Enum values',
             },
             items: [
               {
+                name: 'options',
+                type: 'textarea-enum',
                 intlLabel: {
-                  id: `${PLUGIN_ID}.groupKey.label`,
-                  defaultMessage: 'Group Key',
+                  id: `${PLUGIN_ID}.enum.label`,
+                  defaultMessage: 'Options (one per line)',
                 },
                 description: {
-                  id: `${PLUGIN_ID}.groupKey.description`,
+                  id: `${PLUGIN_ID}.enum.description`,
                   defaultMessage:
-                    'Unique identifier for this set of options. Fields sharing the same group key will share the same options list.',
+                    'Default enum values (read-only in CMS). Users can add more values dynamically via the "+" button.',
                 },
-                name: 'options.groupKey',
-                type: 'text',
+                placeholder: {
+                  id: `${PLUGIN_ID}.enum.placeholder`,
+                  defaultMessage: 'Ex:\nBEFORE\nAFTER\nSINGLE',
+                },
               },
             ],
           },
@@ -63,7 +76,8 @@ export default {
                 },
                 description: {
                   id: 'form.attribute.item.requiredField.description',
-                  defaultMessage: "You won't be able to create an entry if this field is empty",
+                  defaultMessage:
+                    "You won't be able to create an entry if this field is empty",
                 },
               },
               {

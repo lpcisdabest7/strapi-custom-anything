@@ -4,6 +4,7 @@
  * - "+" button to add new options dynamically (stored in DB)
  * - "Manage" panel to view/remove options
  * - Auto-merges schema options + DB options
+ * - Theme-aware: supports both light and dark Strapi themes
  *
  * groupKey is auto-derived from the field name for global sharing.
  */
@@ -19,60 +20,76 @@ import ReactSelect from 'react-select';
 
 const PLUGIN_API = 'dynamic-enum';
 
-/* ─── Styled Components ─── */
+/* ─── Theme-aware Styled Components ─── */
 const StyledSelect = styled.div`
   .ms-react-select__control {
-    border: 1px solid #dcdce4;
+    border: 1px solid ${({ theme }) => theme.colors.neutral200};
     border-radius: 4px;
     min-height: 40px;
-    background: #ffffff;
+    background: ${({ theme }) => theme.colors.neutral0};
     box-shadow: none;
     cursor: pointer;
   }
   .ms-react-select__control:hover {
-    border-color: #c0c0cf;
+    border-color: ${({ theme }) => theme.colors.neutral300};
   }
   .ms-react-select__control--is-focused {
-    border-color: #4945ff;
-    box-shadow: 0 0 0 2px #4945ff40;
+    border-color: ${({ theme }) => theme.colors.primary600};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary600}40;
   }
   .ms-react-select__multi-value {
-    background-color: #f0f0ff;
-    border: 1px solid #d9d8ff;
+    background-color: ${({ theme }) => theme.colors.primary100};
+    border: 1px solid ${({ theme }) => theme.colors.primary200};
     border-radius: 4px;
     margin: 2px 4px 2px 0;
   }
   .ms-react-select__multi-value__label {
-    color: #4945ff;
+    color: ${({ theme }) => theme.colors.primary600};
     font-size: 14px;
     padding: 2px 6px;
   }
   .ms-react-select__multi-value__remove {
-    color: #4945ff;
+    color: ${({ theme }) => theme.colors.primary600};
     cursor: pointer;
   }
   .ms-react-select__multi-value__remove:hover {
-    background-color: #d9d8ff;
-    color: #271fe0;
+    background-color: ${({ theme }) => theme.colors.primary200};
+    color: ${({ theme }) => theme.colors.primary700};
+  }
+  .ms-react-select__input-container {
+    color: ${({ theme }) => theme.colors.neutral800};
   }
   .ms-react-select__placeholder {
-    color: #8e8ea9;
+    color: ${({ theme }) => theme.colors.neutral500};
   }
   .ms-react-select__menu {
     z-index: 5;
-    border: 1px solid #dcdce4;
+    border: 1px solid ${({ theme }) => theme.colors.neutral200};
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: ${({ theme }) => theme.colors.neutral0};
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
   .ms-react-select__option {
     cursor: pointer;
+    color: ${({ theme }) => theme.colors.neutral800};
+    background: ${({ theme }) => theme.colors.neutral0};
   }
   .ms-react-select__option--is-focused {
-    background-color: #f0f0ff;
+    background-color: ${({ theme }) => theme.colors.primary100};
   }
   .ms-react-select__option--is-selected {
-    background-color: #4945ff;
+    background-color: ${({ theme }) => theme.colors.primary600};
     color: #fff;
+  }
+  .ms-react-select__indicator-separator {
+    background-color: ${({ theme }) => theme.colors.neutral200};
+  }
+  .ms-react-select__dropdown-indicator,
+  .ms-react-select__clear-indicator {
+    color: ${({ theme }) => theme.colors.neutral500};
+    &:hover {
+      color: ${({ theme }) => theme.colors.neutral700};
+    }
   }
 `;
 
@@ -87,12 +104,19 @@ const AddInput = styled.input`
   flex: 1;
   height: 32px;
   padding: 0 10px;
-  border: 1px solid #dcdce4;
+  border: 1px solid ${({ theme }) => theme.colors.neutral200};
   border-radius: 4px;
   font-size: 13px;
   outline: none;
-  &:focus { border-color: #4945ff; box-shadow: 0 0 0 2px #4945ff40; }
-  &::placeholder { color: #8e8ea9; }
+  background: ${({ theme }) => theme.colors.neutral0};
+  color: ${({ theme }) => theme.colors.neutral800};
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary600};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary600}40;
+  }
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.neutral500};
+  }
 `;
 
 const AddBtn = styled.button`
@@ -101,32 +125,40 @@ const AddBtn = styled.button`
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid #4945ff;
+  border: 1px solid ${({ theme }) => theme.colors.primary600};
   border-radius: 4px;
-  background: #4945ff;
+  background: ${({ theme }) => theme.colors.primary600};
   color: #fff;
   cursor: pointer;
-  &:hover { background: #271fe0; }
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary700};
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 `;
 
 const ManageBtn = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  color: #8e8ea9;
+  color: ${({ theme }) => theme.colors.neutral500};
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 4px;
-  &:hover { background: #f6f6f9; color: #4945ff; }
+  &:hover {
+    background: ${({ theme }) => theme.colors.neutral150};
+    color: ${({ theme }) => theme.colors.primary600};
+  }
 `;
 
 const ManagerBox = styled.div`
   margin-top: 4px;
   padding: 10px 12px;
-  background: #f6f6f9;
+  background: ${({ theme }) => theme.colors.neutral100};
   border-radius: 4px;
-  border: 1px dashed #c0c0cf;
+  border: 1px dashed ${({ theme }) => theme.colors.neutral300};
 `;
 
 const OptionChip = styled.span`
@@ -135,10 +167,11 @@ const OptionChip = styled.span`
   gap: 4px;
   padding: 3px 8px;
   margin: 3px;
-  background: #fff;
-  border: 1px solid #dcdce4;
+  background: ${({ theme }) => theme.colors.neutral0};
+  border: 1px solid ${({ theme }) => theme.colors.neutral200};
   border-radius: 4px;
   font-size: 13px;
+  color: ${({ theme }) => theme.colors.neutral800};
 `;
 
 const RemoveBtn = styled.button`
@@ -148,9 +181,11 @@ const RemoveBtn = styled.button`
   padding: 0;
   display: flex;
   align-items: center;
-  color: #d02b20;
+  color: ${({ theme }) => theme.colors.danger600};
   opacity: 0.5;
-  &:hover { opacity: 1; }
+  &:hover {
+    opacity: 1;
+  }
 `;
 
 const SchemaChip = styled.span`
@@ -158,19 +193,31 @@ const SchemaChip = styled.span`
   align-items: center;
   padding: 3px 8px;
   margin: 3px;
-  background: #dcdce4;
-  border: 1px solid #c0c0cf;
+  background: ${({ theme }) => theme.colors.neutral200};
+  border: 1px solid ${({ theme }) => theme.colors.neutral300};
   border-radius: 4px;
   font-size: 13px;
-  color: #666;
+  color: ${({ theme }) => theme.colors.neutral600};
+`;
+
+const ManagerInfo = styled.div`
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.neutral600};
+`;
+
+const ManagerHint = styled.span`
+  color: ${({ theme }) => theme.colors.neutral500};
+`;
+
+const EmptyText = styled.span`
+  color: ${({ theme }) => theme.colors.neutral500};
+  font-size: 13px;
 `;
 
 /* ─── Helper: extract field name from path ─── */
 function extractGroupKey(name) {
-  // name can be like "tags", "styles.0.tags", "categories.2.display"
-  // Extract the last segment as groupKey
   const parts = name.split('.');
-  // Filter out numeric indices
   const nonNumeric = parts.filter(p => isNaN(Number(p)));
   return nonNumeric.join('_') || name;
 }
@@ -198,7 +245,6 @@ const EnhancedMultiSelect = ({
   const [showManager, setShowManager] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Schema options (from content-type builder config)
   const schemaOptions = useMemo(() => {
     return (attribute?.options || [])
       .map(opt => {
@@ -211,7 +257,6 @@ const EnhancedMultiSelect = ({
       .filter(Boolean);
   }, [attribute]);
 
-  // Fetch DB options
   const fetchDbOptions = useCallback(async () => {
     try {
       setLoading(true);
@@ -226,7 +271,6 @@ const EnhancedMultiSelect = ({
 
   useEffect(() => { fetchDbOptions(); }, [fetchDbOptions]);
 
-  // Merge schema + DB options (deduplicated)
   const allOptions = useMemo(() => {
     const merged = new Map();
     schemaOptions.forEach(o => merged.set(o.value, o));
@@ -238,7 +282,6 @@ const EnhancedMultiSelect = ({
     return Array.from(merged.values());
   }, [schemaOptions, dbOptions]);
 
-  // Parse current selected value
   const selectedValues = useMemo(() => {
     let parsed;
     try {
@@ -253,7 +296,6 @@ const EnhancedMultiSelect = ({
       .filter(Boolean);
   }, [selectedValues, allOptions]);
 
-  // Handlers
   const handleChange = useCallback((selected) => {
     const newVals = selected ? selected.map(s => s.value) : [];
     onChange(name, JSON.stringify(newVals));
@@ -279,7 +321,6 @@ const EnhancedMultiSelect = ({
         `/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}/${encodeURIComponent(optVal)}`
       );
       setDbOptions(Array.isArray(data?.data) ? data.data : []);
-      // Also deselect if selected
       const newSelected = selectedValues.filter(v => v !== optVal);
       if (newSelected.length !== selectedValues.length) {
         onChange(name, JSON.stringify(newSelected));
@@ -293,7 +334,6 @@ const EnhancedMultiSelect = ({
     if (e.key === 'Enter') { e.preventDefault(); handleAddOption(); }
   }, [handleAddOption]);
 
-  // Validation
   const fieldError = useMemo(() => {
     if (error) return error;
     const { min, max } = attribute || {};
@@ -320,7 +360,6 @@ const EnhancedMultiSelect = ({
       children: [
         jsx(Field.Label, { children: displayLabel }),
 
-        // Select
         jsx(StyledSelect, {
           children: jsx(ReactSelect, {
             isMulti: true,
@@ -337,7 +376,6 @@ const EnhancedMultiSelect = ({
           }),
         }),
 
-        // Add row
         !disabled && jsx(AddRow, {
           children: jsxs(Fragment, {
             children: [
@@ -361,33 +399,26 @@ const EnhancedMultiSelect = ({
           }),
         }),
 
-        // Manager panel
         showManager && !disabled && jsx(ManagerBox, {
           children: jsxs(Fragment, {
             children: [
-              jsx('div', {
-                style: { marginBottom: 8, fontSize: 12, color: '#666' },
-                children: jsxs(Fragment, {
-                  children: [
-                    'Group: ',
-                    jsx('strong', { children: groupKey }),
-                    ' — ',
-                    jsx('span', {
-                      style: { color: '#999' },
-                      children: 'Schema options (gray) are defined in code. Dynamic options (white) can be removed.',
-                    }),
-                  ],
-                }),
+              jsxs(ManagerInfo, {
+                children: [
+                  'Group: ',
+                  jsx('strong', { children: groupKey }),
+                  ' — ',
+                  jsx(ManagerHint, {
+                    children: 'Schema options (gray) are defined in code. Dynamic options can be removed.',
+                  }),
+                ],
               }),
               jsx('div', {
                 style: { display: 'flex', flexWrap: 'wrap' },
                 children: jsxs(Fragment, {
                   children: [
-                    // Schema options (non-removable)
                     ...schemaOptions.map(o =>
                       jsx(SchemaChip, { title: 'Defined in schema (read-only)', children: o.label }, `schema-${o.value}`)
                     ),
-                    // DB options (removable)
                     ...dbOptions
                       .filter(val => !schemaValueSet.has(val))
                       .map(val =>
@@ -402,8 +433,7 @@ const EnhancedMultiSelect = ({
                           ],
                         }, `db-${val}`)
                       ),
-                    allOptions.length === 0 && jsx('span', {
-                      style: { color: '#8e8ea9', fontSize: 13 },
+                    allOptions.length === 0 && jsx(EmptyText, {
                       children: 'No options yet.',
                     }),
                   ],

@@ -1,9 +1,11 @@
-import { jsx, jsxs, Fragment as Fragment$1 } from "react/jsx-runtime";
+import { jsxs, Fragment as Fragment$1, jsx } from "react/jsx-runtime";
 import styled$1, { useTheme, styled, css, keyframes, createGlobalStyle } from "styled-components";
 import * as m$1 from "react";
 import m__default, { useRef, useEffect, useMemo, useCallback, createContext, createElement, useContext, forwardRef, Children, isValidElement, cloneElement, Fragment, useState, useLayoutEffect, useReducer, useImperativeHandle, startTransition } from "react";
 import * as we$1 from "react-dom";
 import we__default, { flushSync, createPortal } from "react-dom";
+import { useIntl } from "react-intl";
+import { useField, useFetchClient } from "@strapi/strapi/admin";
 const __variableDynamicImportRuntimeHelper = (glob, path, segs) => {
   const v = glob[path];
   if (v) {
@@ -59496,13 +59498,262 @@ const IconBox = styled$1(T)`
 const DynamicEnumIcon = () => {
   return /* @__PURE__ */ jsx(IconBox, { justifyContent: "center", alignItems: "center", width: 7, height: 6, hasRadius: true, "aria-hidden": true, children: /* @__PURE__ */ jsx(cn$1, {}) });
 };
+const PLUGIN_API = "dynamic-enum";
+function extractGroupKey(name2) {
+  const parts = name2.split(".");
+  const nonNumeric = parts.filter((p2) => isNaN(Number(p2)));
+  return nonNumeric.join("_") || name2;
+}
+const AddRow = styled$1.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+`;
+const AddInput = styled$1.input`
+  flex: 1;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid ${({ theme: theme2 }) => theme2.colors.neutral200};
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  background: ${({ theme: theme2 }) => theme2.colors.neutral0};
+  color: ${({ theme: theme2 }) => theme2.colors.neutral800};
+  &:focus {
+    border-color: ${({ theme: theme2 }) => theme2.colors.primary600};
+    box-shadow: 0 0 0 2px ${({ theme: theme2 }) => theme2.colors.primary600}40;
+  }
+  &::placeholder {
+    color: ${({ theme: theme2 }) => theme2.colors.neutral500};
+  }
+`;
+const AddBtn = styled$1.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid ${({ theme: theme2 }) => theme2.colors.primary600};
+  border-radius: 4px;
+  background: ${({ theme: theme2 }) => theme2.colors.primary600};
+  color: #fff;
+  cursor: pointer;
+  &:hover {
+    background: ${({ theme: theme2 }) => theme2.colors.primary700};
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+const ManageBtn = styled$1.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${({ theme: theme2 }) => theme2.colors.neutral500};
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  &:hover {
+    background: ${({ theme: theme2 }) => theme2.colors.neutral150};
+    color: ${({ theme: theme2 }) => theme2.colors.primary600};
+  }
+`;
+const ManagerBox = styled$1.div`
+  margin-top: 4px;
+  padding: 10px 12px;
+  background: ${({ theme: theme2 }) => theme2.colors.neutral100};
+  border-radius: 4px;
+  border: 1px dashed ${({ theme: theme2 }) => theme2.colors.neutral300};
+`;
+const OptionChip = styled$1.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  margin: 3px;
+  background: ${({ theme: theme2 }) => theme2.colors.neutral0};
+  border: 1px solid ${({ theme: theme2 }) => theme2.colors.neutral200};
+  border-radius: 4px;
+  font-size: 13px;
+  color: ${({ theme: theme2 }) => theme2.colors.neutral800};
+`;
+const SchemaChip = styled$1.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  margin: 3px;
+  background: ${({ theme: theme2 }) => theme2.colors.neutral200};
+  border: 1px solid ${({ theme: theme2 }) => theme2.colors.neutral300};
+  border-radius: 4px;
+  font-size: 13px;
+  color: ${({ theme: theme2 }) => theme2.colors.neutral600};
+`;
+const RemoveBtn = styled$1.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: ${({ theme: theme2 }) => theme2.colors.danger600};
+  opacity: 0.5;
+  &:hover {
+    opacity: 1;
+  }
+`;
+const ManagerInfo = styled$1.div`
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: ${({ theme: theme2 }) => theme2.colors.neutral600};
+`;
+const ManagerHint = styled$1.span`
+  color: ${({ theme: theme2 }) => theme2.colors.neutral500};
+`;
+const EnhancedEnumeration = ({
+  name: name2,
+  label,
+  hint,
+  required,
+  disabled,
+  attribute,
+  labelAction,
+  ...props
+}) => {
+  const { formatMessage } = useIntl();
+  const field = useField(name2);
+  const { get, post, del } = useFetchClient();
+  const groupKey = extractGroupKey(name2);
+  const [dbOptions, setDbOptions] = useState([]);
+  const [newValue, setNewValue] = useState("");
+  const [showManager, setShowManager] = useState(false);
+  const schemaEnumValues = useMemo(() => {
+    return attribute?.enum || [];
+  }, [attribute]);
+  const schemaValueSet = useMemo(() => new Set(schemaEnumValues), [schemaEnumValues]);
+  const fetchDbOptions = useCallback(async () => {
+    try {
+      const { data } = await get(`/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}`);
+      setDbOptions(Array.isArray(data?.data) ? data.data : []);
+    } catch {
+      setDbOptions([]);
+    }
+  }, [get, groupKey]);
+  useEffect(() => {
+    fetchDbOptions();
+  }, [fetchDbOptions]);
+  const allValues = useMemo(() => {
+    const merged = [...schemaEnumValues];
+    dbOptions.forEach((val) => {
+      if (!schemaValueSet.has(val)) {
+        merged.push(val);
+      }
+    });
+    return merged;
+  }, [schemaEnumValues, dbOptions, schemaValueSet]);
+  const handleAddOption = useCallback(async () => {
+    const trimmed = newValue.trim();
+    if (!trimmed) return;
+    try {
+      const { data } = await post(
+        `/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}`,
+        { value: trimmed }
+      );
+      setDbOptions(Array.isArray(data?.data) ? data.data : []);
+      setNewValue("");
+    } catch (err) {
+      console.error("[dynamic-enum] add failed:", err);
+    }
+  }, [post, groupKey, newValue]);
+  const handleRemoveDbOption = useCallback(
+    async (optVal) => {
+      try {
+        const { data } = await del(
+          `/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}/${encodeURIComponent(optVal)}`
+        );
+        setDbOptions(Array.isArray(data?.data) ? data.data : []);
+        if (field.value === optVal) {
+          field.onChange(name2, null);
+        }
+      } catch (err) {
+        console.error("[dynamic-enum] remove failed:", err);
+      }
+    },
+    [del, groupKey, field, name2]
+  );
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAddOption();
+      }
+    },
+    [handleAddOption]
+  );
+  return /* @__PURE__ */ jsxs(Vm.Root, { error: field.error, name: name2, hint, required, children: [
+    /* @__PURE__ */ jsx(Vm.Label, { action: labelAction, children: label }),
+    /* @__PURE__ */ jsxs(
+      wo,
+      {
+        onChange: (value) => {
+          field.onChange(name2, value === "" ? null : value);
+        },
+        value: field.value,
+        disabled,
+        children: [
+          /* @__PURE__ */ jsx(xo, { value: "", disabled: required, hidden: required, children: formatMessage({
+            id: "components.InputSelect.option.placeholder",
+            defaultMessage: "Choose here"
+          }) }),
+          allValues.map((val) => /* @__PURE__ */ jsx(xo, { value: val, children: val }, val))
+        ]
+      }
+    ),
+    !disabled && /* @__PURE__ */ jsxs(AddRow, { children: [
+      /* @__PURE__ */ jsx(
+        AddInput,
+        {
+          placeholder: "New option...",
+          value: newValue,
+          onChange: (e) => setNewValue(e.target.value),
+          onKeyDown: handleKeyDown
+        }
+      ),
+      /* @__PURE__ */ jsx(AddBtn, { onClick: handleAddOption, disabled: !newValue.trim(), title: "Add option", children: /* @__PURE__ */ jsx(sn$1, { width: 16, height: 16 }) }),
+      /* @__PURE__ */ jsx(ManageBtn, { onClick: () => setShowManager(!showManager), children: showManager ? "Hide" : `Manage (${allValues.length})` })
+    ] }),
+    showManager && !disabled && /* @__PURE__ */ jsxs(ManagerBox, { children: [
+      /* @__PURE__ */ jsxs(ManagerInfo, { children: [
+        "Group: ",
+        /* @__PURE__ */ jsx("strong", { children: groupKey }),
+        " —",
+        " ",
+        /* @__PURE__ */ jsx(ManagerHint, { children: "Schema options (gray) are read-only. Dynamic options can be removed." })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexWrap: "wrap" }, children: [
+        schemaEnumValues.map((val) => /* @__PURE__ */ jsx(SchemaChip, { title: "Defined in schema (read-only)", children: val }, `schema-${val}`)),
+        dbOptions.filter((val) => !schemaValueSet.has(val)).map((val) => /* @__PURE__ */ jsxs(OptionChip, { children: [
+          val,
+          /* @__PURE__ */ jsx(RemoveBtn, { onClick: () => handleRemoveDbOption(val), title: `Remove "${val}"`, children: /* @__PURE__ */ jsx(C5, { width: 10, height: 10 }) })
+        ] }, `db-${val}`))
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx(Vm.Hint, {}),
+    /* @__PURE__ */ jsx(Vm.Error, {})
+  ] });
+};
 const PLUGIN_ID = "dynamic-enum";
 const index = {
   register(app) {
+    app.addFields({
+      type: "enumeration",
+      Component: EnhancedEnumeration
+    });
     app.customFields.register({
       name: PLUGIN_ID,
       pluginId: PLUGIN_ID,
-      type: "json",
+      type: "string",
       icon: DynamicEnumIcon,
       intlLabel: {
         id: `${PLUGIN_ID}.label`,
@@ -59510,10 +59761,10 @@ const index = {
       },
       intlDescription: {
         id: `${PLUGIN_ID}.description`,
-        defaultMessage: "Select multiple options with ability to add new values dynamically"
+        defaultMessage: "Single-select with ability to add new enum values dynamically. Merges schema options + DB options."
       },
       components: {
-        Input: async () => import("./DynamicEnumInput-BosHCBgE.mjs").then((m3) => ({
+        Input: async () => import("./DynamicEnumInput-BTzEecV7.mjs").then((m3) => ({
           default: m3.default
         }))
       },
@@ -59521,21 +59772,25 @@ const index = {
         base: [
           {
             sectionTitle: {
-              id: `${PLUGIN_ID}.section.config`,
-              defaultMessage: "Configuration"
+              id: `${PLUGIN_ID}.section.enum`,
+              defaultMessage: "Enum values"
             },
             items: [
               {
+                name: "options",
+                type: "textarea-enum",
                 intlLabel: {
-                  id: `${PLUGIN_ID}.groupKey.label`,
-                  defaultMessage: "Group Key"
+                  id: `${PLUGIN_ID}.enum.label`,
+                  defaultMessage: "Options (one per line)"
                 },
                 description: {
-                  id: `${PLUGIN_ID}.groupKey.description`,
-                  defaultMessage: "Unique identifier for this set of options. Fields sharing the same group key will share the same options list."
+                  id: `${PLUGIN_ID}.enum.description`,
+                  defaultMessage: 'Default enum values (read-only in CMS). Users can add more values dynamically via the "+" button.'
                 },
-                name: "options.groupKey",
-                type: "text"
+                placeholder: {
+                  id: `${PLUGIN_ID}.enum.placeholder`,
+                  defaultMessage: "Ex:\nBEFORE\nAFTER\nSINGLE"
+                }
               }
             ]
           }
@@ -59600,12 +59855,8 @@ function prefixPluginTranslations(trad, pluginId) {
 }
 export {
   C5 as C,
-  I,
-  R,
   T,
   Vm as V,
-  X0 as X,
-  sn$1 as a,
   index as i,
-  st as s
+  sn$1 as s
 };
