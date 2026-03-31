@@ -3,7 +3,7 @@ Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 const jsxRuntime = require("react/jsx-runtime");
 const m = require("react");
 const reactIntl = require("react-intl");
-const index = require("./index-Drpi4TxS.js");
+const index = require("./index-BF_CO0kJ.js");
 const admin = require("@strapi/strapi/admin");
 const Select = require("react-select");
 const styled = require("styled-components");
@@ -237,10 +237,6 @@ const DynamicEnumInput = ({
     });
     return Array.from(merged.values());
   }, [schemaOptions, dbOptions]);
-  const schemaValueSet = m.useMemo(
-    () => new Set(schemaOptions.map((o) => o.value)),
-    [schemaOptions]
-  );
   const selectedOption = m.useMemo(() => {
     if (!value) return null;
     return allOptions.find((o) => o.value === value) || { label: value, value };
@@ -339,8 +335,8 @@ const DynamicEnumInput = ({
         /* @__PURE__ */ jsxRuntime.jsx(ManagerHint, { children: "Schema options (gray) are read-only. Dynamic options can be removed." })
       ] }),
       /* @__PURE__ */ jsxRuntime.jsxs("div", { style: { display: "flex", flexWrap: "wrap" }, children: [
-        schemaOptions.map((o) => /* @__PURE__ */ jsxRuntime.jsx(SchemaChip, { title: "Defined in schema (read-only)", children: o.label }, `schema-${o.value}`)),
-        dbOptions.filter((val) => !schemaValueSet.has(val)).map((val) => /* @__PURE__ */ jsxRuntime.jsxs(OptionChip, { children: [
+        schemaOptions.filter((o) => !dbOptions.includes(o.value)).map((o) => /* @__PURE__ */ jsxRuntime.jsx(SchemaChip, { title: "Defined in schema (read-only)", children: o.label }, `schema-${o.value}`)),
+        dbOptions.map((val) => /* @__PURE__ */ jsxRuntime.jsxs(OptionChip, { children: [
           val,
           /* @__PURE__ */ jsxRuntime.jsx(
             RemoveBtn,

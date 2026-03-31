@@ -273,12 +273,7 @@ const DynamicEnumInput = ({
     return Array.from(merged.values());
   }, [schemaOptions, dbOptions]);
 
-  const schemaValueSet = useMemo(
-    () => new Set(schemaOptions.map((o) => o.value)),
-    [schemaOptions]
-  );
-
-  const selectedOption = useMemo(() => {
+const selectedOption = useMemo(() => {
     if (!value) return null;
     return allOptions.find((o) => o.value === value) || { label: value, value };
   }, [value, allOptions]);
@@ -385,24 +380,24 @@ const DynamicEnumInput = ({
               </ManagerHint>
             </ManagerInfo>
             <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-              {schemaOptions.map((o) => (
-                <SchemaChip key={`schema-${o.value}`} title="Defined in schema (read-only)">
-                  {o.label}
-                </SchemaChip>
-              ))}
-              {dbOptions
-                .filter((val) => !schemaValueSet.has(val))
-                .map((val) => (
-                  <OptionChip key={`db-${val}`}>
-                    {val}
-                    <RemoveBtn
-                      onClick={() => handleRemoveDbOption(val)}
-                      title={`Remove "${val}"`}
-                    >
-                      <Cross width={10} height={10} />
-                    </RemoveBtn>
-                  </OptionChip>
+              {schemaOptions
+                .filter((o) => !dbOptions.includes(o.value))
+                .map((o) => (
+                  <SchemaChip key={`schema-${o.value}`} title="Defined in schema (read-only)">
+                    {o.label}
+                  </SchemaChip>
                 ))}
+              {dbOptions.map((val) => (
+                <OptionChip key={`db-${val}`}>
+                  {val}
+                  <RemoveBtn
+                    onClick={() => handleRemoveDbOption(val)}
+                    title={`Remove "${val}"`}
+                  >
+                    <Cross width={10} height={10} />
+                  </RemoveBtn>
+                </OptionChip>
+              ))}
               {allOptions.length === 0 && <EmptyText>No options yet.</EmptyText>}
             </div>
           </ManagerBox>

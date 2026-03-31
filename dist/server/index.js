@@ -231,17 +231,13 @@ async function removeFromCache(strapi, groupKey, value) {
 }
 const controller = ({ strapi }) => ({
   /**
-   * GET: return ONLY truly dynamic options (DB-stored, not in original schema).
+   * GET: return all DB-stored dynamic options for this groupKey.
    */
   async getOptions(ctx) {
     const { groupKey } = ctx.params;
     if (!groupKey) return ctx.badRequest("groupKey is required");
     const allOptions = await getAllRelatedOptions(strapi, groupKey);
-    const fieldName = extractFieldName(groupKey);
-    const originalEnums = strapi.__originalSchemaEnums || /* @__PURE__ */ new Map();
-    const originalSet = originalEnums.get(fieldName) || /* @__PURE__ */ new Set();
-    const dynamicOnly = allOptions.filter((v) => !originalSet.has(v));
-    ctx.body = { data: dynamicOnly };
+    ctx.body = { data: allOptions };
   },
   async addOption(ctx) {
     const { groupKey } = ctx.params;
