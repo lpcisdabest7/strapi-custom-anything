@@ -204,9 +204,6 @@ const EnhancedEnumeration = ({
     return attribute?.enum || [];
   }, [attribute]);
 
-  const schemaValueSet = useMemo(() => new Set(schemaEnumValues), [schemaEnumValues]);
-
-  // Fetch DB options via raw fetch (bypass useFetchClient /admin prefix issue)
   const fetchDbOptions = useCallback(async () => {
     try {
       const res = await fetch(getApiUrl(groupKey), { headers: getAuthHeaders() });
@@ -226,12 +223,12 @@ const EnhancedEnumeration = ({
   const allValues = useMemo(() => {
     const merged = [...schemaEnumValues];
     dbOptions.forEach((val) => {
-      if (!schemaValueSet.has(val)) {
+      if (!merged.includes(val)) {
         merged.push(val);
       }
     });
     return merged;
-  }, [schemaEnumValues, dbOptions, schemaValueSet]);
+  }, [schemaEnumValues, dbOptions]);
 
   const handleAddOption = useCallback(async () => {
     const trimmed = newValue.trim();

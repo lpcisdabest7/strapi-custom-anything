@@ -1,7 +1,7 @@
 import { jsx, jsxs } from "react/jsx-runtime";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useIntl } from "react-intl";
-import { V as Vm, T, s as sn, C as C5 } from "./index-YY8M6-q4.mjs";
+import { V as Vm, T, s as sn, C as C5 } from "./index-l0TPQFa3.mjs";
 import { useField, useFetchClient } from "@strapi/strapi/admin";
 import Select from "react-select";
 import styled from "styled-components";
