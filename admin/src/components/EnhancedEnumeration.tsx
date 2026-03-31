@@ -12,7 +12,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { Field, SingleSelect, SingleSelectOption } from '@strapi/design-system';
 import { Plus, Cross } from '@strapi/icons';
-import { useField, useFetchClient } from '@strapi/strapi/admin';
+import { useField } from '@strapi/strapi/admin';
 import styled from 'styled-components';
 
 const PLUGIN_API = 'dynamic-enum';
@@ -21,6 +21,25 @@ function extractGroupKey(name: string): string {
   const parts = name.split('.');
   const nonNumeric = parts.filter((p) => isNaN(Number(p)));
   return nonNumeric.join('_') || name;
+}
+
+/**
+ * Raw fetch helper that bypasses useFetchClient (which adds /admin prefix).
+ * Plugin admin routes are at /{pluginName}/options/:groupKey (no /admin prefix).
+ */
+function getAuthHeaders(): Record<string, string> {
+  try {
+    const raw = sessionStorage.getItem('jwtToken') || localStorage.getItem('jwtToken') || '""';
+    const token = JSON.parse(raw);
+    if (token) return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  } catch {}
+  return { 'Content-Type': 'application/json' };
+}
+
+function getApiUrl(groupKey: string, optionValue?: string): string {
+  const origin = window.location.origin;
+  const base = `${origin}/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}`;
+  return optionValue ? `${base}/${encodeURIComponent(optionValue)}` : base;
 }
 
 /* ─── Theme-aware Styled Components ─── */
@@ -154,7 +173,6 @@ const EnhancedEnumeration = ({
 }: any) => {
   const { formatMessage } = useIntl();
   const field = useField(name);
-  const { get, post, del } = useFetchClient();
   const groupKey = extractGroupKey(name);
 
   const [dbOptions, setDbOptions] = useState<string[]>([]);
@@ -167,21 +185,23 @@ const EnhancedEnumeration = ({
 
   const schemaValueSet = useMemo(() => new Set(schemaEnumValues), [schemaEnumValues]);
 
-  // Fetch DB options via useFetchClient (handles auth + prefix automatically)
+  // Fetch DB options via raw fetch (bypass useFetchClient /admin prefix issue)
   const fetchDbOptions = useCallback(async () => {
     try {
-      const { data } = await get(`/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}`);
-      setDbOptions(Array.isArray(data?.data) ? data.data : []);
+      const res = await fetch(getApiUrl(groupKey), { headers: getAuthHeaders() });
+      if (res.ok) {
+        const json = await res.json();
+        setDbOptions(Array.isArray(json?.data) ? json.data : []);
+      }
     } catch {
       setDbOptions([]);
     }
-  }, [get, groupKey]);
+  }, [groupKey]);
 
   useEffect(() => {
     fetchDbOptions();
   }, [fetchDbOptions]);
 
-  // Merge schema enum + DB options
   const allValues = useMemo(() => {
     const merged = [...schemaEnumValues];
     dbOptions.forEach((val) => {
@@ -196,32 +216,42 @@ const EnhancedEnumeration = ({
     const trimmed = newValue.trim();
     if (!trimmed) return;
     try {
-      const { data } = await post(
-        `/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}`,
-        { value: trimmed }
-      );
-      setDbOptions(Array.isArray(data?.data) ? data.data : []);
-      setNewValue('');
+      const res = await fetch(getApiUrl(groupKey), {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ value: trimmed }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setDbOptions(Array.isArray(json?.data) ? json.data : []);
+        setNewValue('');
+      } else {
+        console.error('[dynamic-enum] add failed:', res.status, await res.text());
+      }
     } catch (err) {
       console.error('[dynamic-enum] add failed:', err);
     }
-  }, [post, groupKey, newValue]);
+  }, [groupKey, newValue]);
 
   const handleRemoveDbOption = useCallback(
     async (optVal: string) => {
       try {
-        const { data } = await del(
-          `/${PLUGIN_API}/options/${encodeURIComponent(groupKey)}/${encodeURIComponent(optVal)}`
-        );
-        setDbOptions(Array.isArray(data?.data) ? data.data : []);
-        if (field.value === optVal) {
-          field.onChange(name, null);
+        const res = await fetch(getApiUrl(groupKey, optVal), {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setDbOptions(Array.isArray(json?.data) ? json.data : []);
+          if (field.value === optVal) {
+            field.onChange(name, null);
+          }
         }
       } catch (err) {
         console.error('[dynamic-enum] remove failed:', err);
       }
     },
-    [del, groupKey, field, name]
+    [groupKey, field, name]
   );
 
   const handleKeyDown = useCallback(

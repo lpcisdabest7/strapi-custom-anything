@@ -1,22 +1,17 @@
-"use strict";
-Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-const jsxRuntime = require("react/jsx-runtime");
-const m = require("react");
-const reactIntl = require("react-intl");
-const index = require("./index-DDVrErvc.js");
-const admin = require("@strapi/strapi/admin");
-const Select = require("react-select");
-const styled = require("styled-components");
-const _interopDefault = (e) => e && e.__esModule ? e : { default: e };
-const Select__default = /* @__PURE__ */ _interopDefault(Select);
-const styled__default = /* @__PURE__ */ _interopDefault(styled);
+import { jsx, jsxs } from "react/jsx-runtime";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useIntl } from "react-intl";
+import { V as Vm, T, s as sn, C as C5 } from "./index-BKKRjecq.mjs";
+import { useField, useFetchClient } from "@strapi/strapi/admin";
+import Select from "react-select";
+import styled from "styled-components";
 const PLUGIN_ID = "dynamic-enum";
 function extractGroupKey(name) {
   const parts = name.split(".");
   const nonNumeric = parts.filter((p) => isNaN(Number(p)));
   return nonNumeric.join("_") || name;
 }
-const StyledSelectWrapper = styled__default.default.div`
+const StyledSelectWrapper = styled.div`
   .de-react-select__control {
     border: 1px solid ${({ theme }) => theme.colors.neutral200};
     border-radius: 4px;
@@ -72,13 +67,13 @@ const StyledSelectWrapper = styled__default.default.div`
     }
   }
 `;
-const AddRow = styled__default.default.div`
+const AddRow = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 0;
 `;
-const AddInput = styled__default.default.input`
+const AddInput = styled.input`
   flex: 1;
   height: 32px;
   padding: 0 10px;
@@ -96,7 +91,7 @@ const AddInput = styled__default.default.input`
     color: ${({ theme }) => theme.colors.neutral500};
   }
 `;
-const AddBtn = styled__default.default.button`
+const AddBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,7 +110,7 @@ const AddBtn = styled__default.default.button`
     cursor: not-allowed;
   }
 `;
-const ManageBtn = styled__default.default.button`
+const ManageBtn = styled.button`
   background: none;
   border: none;
   cursor: pointer;
@@ -128,14 +123,14 @@ const ManageBtn = styled__default.default.button`
     color: ${({ theme }) => theme.colors.primary600};
   }
 `;
-const ManagerBox = styled__default.default.div`
+const ManagerBox = styled.div`
   margin-top: 4px;
   padding: 10px 12px;
   background: ${({ theme }) => theme.colors.neutral100};
   border-radius: 4px;
   border: 1px dashed ${({ theme }) => theme.colors.neutral300};
 `;
-const OptionChip = styled__default.default.span`
+const OptionChip = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -147,7 +142,7 @@ const OptionChip = styled__default.default.span`
   font-size: 13px;
   color: ${({ theme }) => theme.colors.neutral800};
 `;
-const SchemaChip = styled__default.default.span`
+const SchemaChip = styled.span`
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
@@ -158,7 +153,7 @@ const SchemaChip = styled__default.default.span`
   font-size: 13px;
   color: ${({ theme }) => theme.colors.neutral600};
 `;
-const RemoveBtn = styled__default.default.button`
+const RemoveBtn = styled.button`
   background: none;
   border: none;
   cursor: pointer;
@@ -171,15 +166,15 @@ const RemoveBtn = styled__default.default.button`
     opacity: 1;
   }
 `;
-const ManagerInfo = styled__default.default.div`
+const ManagerInfo = styled.div`
   margin-bottom: 8px;
   font-size: 12px;
   color: ${({ theme }) => theme.colors.neutral600};
 `;
-const ManagerHint = styled__default.default.span`
+const ManagerHint = styled.span`
   color: ${({ theme }) => theme.colors.neutral500};
 `;
-const EmptyText = styled__default.default.span`
+const EmptyText = styled.span`
   color: ${({ theme }) => theme.colors.neutral500};
   font-size: 13px;
 `;
@@ -193,15 +188,15 @@ const DynamicEnumInput = ({
   placeholder,
   intlLabel
 }) => {
-  const { formatMessage } = reactIntl.useIntl();
-  const { onChange, value, error } = admin.useField(name);
-  const { get, post, del } = admin.useFetchClient();
+  const { formatMessage } = useIntl();
+  const { onChange, value, error } = useField(name);
+  const { get, post, del } = useFetchClient();
   const groupKey = extractGroupKey(name);
-  const [dbOptions, setDbOptions] = m.useState([]);
-  const [newValue, setNewValue] = m.useState("");
-  const [loading, setLoading] = m.useState(false);
-  const [showManager, setShowManager] = m.useState(false);
-  const schemaOptions = m.useMemo(() => {
+  const [dbOptions, setDbOptions] = useState([]);
+  const [newValue, setNewValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showManager, setShowManager] = useState(false);
+  const schemaOptions = useMemo(() => {
     const opts = attribute?.options || attribute?.enum || [];
     return opts.map((opt) => {
       if (typeof opt === "string") {
@@ -211,7 +206,7 @@ const DynamicEnumInput = ({
       return null;
     }).filter(Boolean);
   }, [attribute]);
-  const fetchDbOptions = m.useCallback(async () => {
+  const fetchDbOptions = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await get(
@@ -224,10 +219,10 @@ const DynamicEnumInput = ({
       setLoading(false);
     }
   }, [get, groupKey]);
-  m.useEffect(() => {
+  useEffect(() => {
     fetchDbOptions();
   }, [fetchDbOptions]);
-  const allOptions = m.useMemo(() => {
+  const allOptions = useMemo(() => {
     const merged = /* @__PURE__ */ new Map();
     schemaOptions.forEach((o) => merged.set(o.value, o));
     dbOptions.forEach((val) => {
@@ -237,21 +232,21 @@ const DynamicEnumInput = ({
     });
     return Array.from(merged.values());
   }, [schemaOptions, dbOptions]);
-  const schemaValueSet = m.useMemo(
+  const schemaValueSet = useMemo(
     () => new Set(schemaOptions.map((o) => o.value)),
     [schemaOptions]
   );
-  const selectedOption = m.useMemo(() => {
+  const selectedOption = useMemo(() => {
     if (!value) return null;
     return allOptions.find((o) => o.value === value) || { label: value, value };
   }, [value, allOptions]);
-  const handleChange = m.useCallback(
+  const handleChange = useCallback(
     (selected) => {
       onChange(name, selected ? selected.value : null);
     },
     [onChange, name]
   );
-  const handleAddOption = m.useCallback(async () => {
+  const handleAddOption = useCallback(async () => {
     const trimmed = newValue.trim();
     if (!trimmed) return;
     try {
@@ -265,7 +260,7 @@ const DynamicEnumInput = ({
       console.error("[dynamic-enum] add failed:", err);
     }
   }, [post, groupKey, newValue]);
-  const handleRemoveDbOption = m.useCallback(
+  const handleRemoveDbOption = useCallback(
     async (optVal) => {
       try {
         const { data } = await del(
@@ -281,7 +276,7 @@ const DynamicEnumInput = ({
     },
     [del, groupKey, value, onChange, name]
   );
-  const handleKeyDown = m.useCallback(
+  const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -291,10 +286,10 @@ const DynamicEnumInput = ({
     [handleAddOption]
   );
   const displayLabel = label || (intlLabel ? formatMessage(intlLabel) : name);
-  return /* @__PURE__ */ jsxRuntime.jsx(index.Vm.Root, { hint, error, name, required, children: /* @__PURE__ */ jsxRuntime.jsxs(index.T, { direction: "column", alignItems: "stretch", gap: 1, children: [
-    /* @__PURE__ */ jsxRuntime.jsx(index.Vm.Label, { children: displayLabel }),
-    /* @__PURE__ */ jsxRuntime.jsx(StyledSelectWrapper, { children: /* @__PURE__ */ jsxRuntime.jsx(
-      Select__default.default,
+  return /* @__PURE__ */ jsx(Vm.Root, { hint, error, name, required, children: /* @__PURE__ */ jsxs(T, { direction: "column", alignItems: "stretch", gap: 1, children: [
+    /* @__PURE__ */ jsx(Vm.Label, { children: displayLabel }),
+    /* @__PURE__ */ jsx(StyledSelectWrapper, { children: /* @__PURE__ */ jsx(
+      Select,
       {
         isClearable: true,
         isSearchable: true,
@@ -309,8 +304,8 @@ const DynamicEnumInput = ({
         noOptionsMessage: () => "No options. Add one below."
       }
     ) }),
-    !disabled && /* @__PURE__ */ jsxRuntime.jsxs(AddRow, { children: [
-      /* @__PURE__ */ jsxRuntime.jsx(
+    !disabled && /* @__PURE__ */ jsxs(AddRow, { children: [
+      /* @__PURE__ */ jsx(
         AddInput,
         {
           placeholder: "New option...",
@@ -319,43 +314,45 @@ const DynamicEnumInput = ({
           onKeyDown: handleKeyDown
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx(
+      /* @__PURE__ */ jsx(
         AddBtn,
         {
           onClick: handleAddOption,
           disabled: !newValue.trim(),
           title: "Add option",
-          children: /* @__PURE__ */ jsxRuntime.jsx(index.sn, { width: 16, height: 16 })
+          children: /* @__PURE__ */ jsx(sn, { width: 16, height: 16 })
         }
       ),
-      /* @__PURE__ */ jsxRuntime.jsx(ManageBtn, { onClick: () => setShowManager(!showManager), children: showManager ? "Hide" : `Manage (${allOptions.length})` })
+      /* @__PURE__ */ jsx(ManageBtn, { onClick: () => setShowManager(!showManager), children: showManager ? "Hide" : `Manage (${allOptions.length})` })
     ] }),
-    showManager && !disabled && /* @__PURE__ */ jsxRuntime.jsxs(ManagerBox, { children: [
-      /* @__PURE__ */ jsxRuntime.jsxs(ManagerInfo, { children: [
+    showManager && !disabled && /* @__PURE__ */ jsxs(ManagerBox, { children: [
+      /* @__PURE__ */ jsxs(ManagerInfo, { children: [
         "Group: ",
-        /* @__PURE__ */ jsxRuntime.jsx("strong", { children: groupKey }),
+        /* @__PURE__ */ jsx("strong", { children: groupKey }),
         " —",
         " ",
-        /* @__PURE__ */ jsxRuntime.jsx(ManagerHint, { children: "Schema options (gray) are read-only. Dynamic options can be removed." })
+        /* @__PURE__ */ jsx(ManagerHint, { children: "Schema options (gray) are read-only. Dynamic options can be removed." })
       ] }),
-      /* @__PURE__ */ jsxRuntime.jsxs("div", { style: { display: "flex", flexWrap: "wrap" }, children: [
-        schemaOptions.map((o) => /* @__PURE__ */ jsxRuntime.jsx(SchemaChip, { title: "Defined in schema (read-only)", children: o.label }, `schema-${o.value}`)),
-        dbOptions.filter((val) => !schemaValueSet.has(val)).map((val) => /* @__PURE__ */ jsxRuntime.jsxs(OptionChip, { children: [
+      /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexWrap: "wrap" }, children: [
+        schemaOptions.map((o) => /* @__PURE__ */ jsx(SchemaChip, { title: "Defined in schema (read-only)", children: o.label }, `schema-${o.value}`)),
+        dbOptions.filter((val) => !schemaValueSet.has(val)).map((val) => /* @__PURE__ */ jsxs(OptionChip, { children: [
           val,
-          /* @__PURE__ */ jsxRuntime.jsx(
+          /* @__PURE__ */ jsx(
             RemoveBtn,
             {
               onClick: () => handleRemoveDbOption(val),
               title: `Remove "${val}"`,
-              children: /* @__PURE__ */ jsxRuntime.jsx(index.C5, { width: 10, height: 10 })
+              children: /* @__PURE__ */ jsx(C5, { width: 10, height: 10 })
             }
           )
         ] }, `db-${val}`)),
-        allOptions.length === 0 && /* @__PURE__ */ jsxRuntime.jsx(EmptyText, { children: "No options yet." })
+        allOptions.length === 0 && /* @__PURE__ */ jsx(EmptyText, { children: "No options yet." })
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntime.jsx(index.Vm.Hint, {}),
-    /* @__PURE__ */ jsxRuntime.jsx(index.Vm.Error, {})
+    /* @__PURE__ */ jsx(Vm.Hint, {}),
+    /* @__PURE__ */ jsx(Vm.Error, {})
   ] }) });
 };
-exports.default = DynamicEnumInput;
+export {
+  DynamicEnumInput as default
+};
