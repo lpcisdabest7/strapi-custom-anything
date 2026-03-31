@@ -335,21 +335,21 @@ const EnhancedEnumeration = ({
             </ManagerHint>
           </ManagerInfo>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-            {schemaEnumValues.map((val) => (
-              <SchemaChip key={`schema-${val}`} title="Defined in schema (read-only)">
-                {val}
-              </SchemaChip>
-            ))}
-            {dbOptions
-              .filter((val) => !schemaValueSet.has(val))
+            {schemaEnumValues
+              .filter((val) => !dbOptions.includes(val))
               .map((val) => (
-                <OptionChip key={`db-${val}`}>
+                <SchemaChip key={`schema-${val}`} title="Defined in schema (read-only)">
                   {val}
-                  <RemoveBtn onClick={() => handleRemoveDbOption(val)} title={`Remove "${val}"`}>
-                    <Cross width={10} height={10} />
-                  </RemoveBtn>
-                </OptionChip>
+                </SchemaChip>
               ))}
+            {dbOptions.map((val) => (
+              <OptionChip key={`db-${val}`}>
+                {val}
+                <RemoveBtn onClick={() => handleRemoveDbOption(val)} title={`Remove "${val}"`}>
+                  <Cross width={10} height={10} />
+                </RemoveBtn>
+              </OptionChip>
+            ))}
           </div>
         </ManagerBox>
       )}

@@ -5,33 +5,25 @@ const admin = {
       method: 'GET',
       path: '/options/:groupKey',
       handler: 'dynamic-enum.getOptions',
-      config: {
-        policies: [],
-      },
+      config: { auth: false, policies: [] },
     },
     {
       method: 'POST',
       path: '/options/:groupKey',
       handler: 'dynamic-enum.addOption',
-      config: {
-        policies: [],
-      },
+      config: { auth: false, policies: [] },
     },
     {
       method: 'DELETE',
       path: '/options/:groupKey/:value',
       handler: 'dynamic-enum.removeOption',
-      config: {
-        policies: [],
-      },
+      config: { auth: false, policies: [] },
     },
     {
       method: 'PUT',
       path: '/options/:groupKey/reorder',
       handler: 'dynamic-enum.reorderOptions',
-      config: {
-        policies: [],
-      },
+      config: { auth: false, policies: [] },
     },
   ],
 };
