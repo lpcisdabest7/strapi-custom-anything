@@ -18,40 +18,30 @@ import styled from 'styled-components';
 const PLUGIN_API = 'dynamic-enum';
 
 /**
- * Try to get the component UID from Strapi's ComponentContext.
- * This allows grouping by component type (e.g., vsl-common.preview)
- * so all instances of the same component share dynamic options.
+ * Build a stable groupKey from the Strapi field `name` prop.
+ *
+ * The `name` prop looks like: "screens.0.categories.0.cardPreviews.0.role"
+ * We strip numeric indices to get: "cardPreviews.role"
+ * This gives a stable key that identifies the component field regardless of
+ * which content entry or array index it appears in.
+ *
+ * Examples:
+ *   "screens.0.categories.0.cardPreviews.0.role" → "cardPreviews.role"
+ *   "screens.0.categories.0.styles.0.cardPreviews.0.role" → "cardPreviews.role"
+ *   "role" → "role" (top-level field)
+ *
+ * The last TWO non-numeric segments are used (parent + field) to provide
+ * component-level grouping. If the field has the same parent across different
+ * component types (e.g., cardPreviews.role in both vsl and boopix), they share options.
  */
-let _useComponent: any = null;
-try {
-  const mod = require('@strapi/content-manager/strapi-admin');
-  _useComponent = mod?.useComponent;
-} catch {}
-
-/**
- * Build groupKey based on component UID + field name.
- * e.g., "vsl-common.preview::role" → all vsl-common.preview instances share "role" options.
- * Falls back to last field segment if no component context.
- */
-function useGroupKey(name: string): string {
-  let componentUid: string | undefined;
-  try {
-    if (_useComponent) {
-      componentUid = _useComponent('EnhancedEnumeration', (state: any) => state.uid);
-    }
-  } catch {}
-
-  // Extract just the field name (last non-numeric segment)
-  const parts = name.split('.');
-  const fieldName = parts.filter((p) => isNaN(Number(p))).pop() || name;
-
-  if (componentUid) {
-    // e.g., "vsl-common.preview::role"
-    return `${componentUid}::${fieldName}`;
+function getGroupKey(name: string): string {
+  const parts = name.split('.').filter((p) => isNaN(Number(p)));
+  // Use last 2 segments for component context: "cardPreviews.role"
+  // Or just the field name if it's a top-level field
+  if (parts.length >= 2) {
+    return `${parts[parts.length - 2]}.${parts[parts.length - 1]}`;
   }
-
-  // Fallback for top-level fields (not inside a component)
-  return fieldName;
+  return parts[parts.length - 1] || name;
 }
 
 /**
@@ -204,7 +194,7 @@ const EnhancedEnumeration = ({
 }: any) => {
   const { formatMessage } = useIntl();
   const field = useField(name);
-  const groupKey = useGroupKey(name);
+  const groupKey = getGroupKey(name);
 
   const [dbOptions, setDbOptions] = useState<string[]>([]);
   const [newValue, setNewValue] = useState('');

@@ -3,7 +3,7 @@ Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 const jsxRuntime = require("react/jsx-runtime");
 const m = require("react");
 const reactIntl = require("react-intl");
-const index = require("./index-CrPZbFd2.js");
+const index = require("./index-CQGunPYA.js");
 const admin = require("@strapi/strapi/admin");
 const Select = require("react-select");
 const styled = require("styled-components");
