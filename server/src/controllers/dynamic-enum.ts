@@ -134,14 +134,21 @@ async function removeFromCache(strapi: Core.Strapi, groupKey: string, value: str
 
 const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
-   * GET: return merged dynamic options from ALL related groupKeys for this field.
+   * GET: return ONLY truly dynamic options (DB-stored, not in original schema).
    */
   async getOptions(ctx: any) {
     const { groupKey } = ctx.params;
     if (!groupKey) return ctx.badRequest('groupKey is required');
 
     const allOptions = await getAllRelatedOptions(strapi, groupKey);
-    ctx.body = { data: allOptions };
+
+    // Filter out values that were in the original schema (before bootstrap mutation)
+    const fieldName = extractFieldName(groupKey);
+    const originalEnums: Map<string, Set<string>> = (strapi as any).__originalSchemaEnums || new Map();
+    const originalSet: Set<string> = originalEnums.get(fieldName) || new Set();
+    const dynamicOnly = allOptions.filter((v) => !originalSet.has(v));
+
+    ctx.body = { data: dynamicOnly };
   },
 
   async addOption(ctx: any) {

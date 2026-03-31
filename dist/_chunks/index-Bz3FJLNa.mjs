@@ -59760,8 +59760,8 @@ const EnhancedEnumeration = ({
         /* @__PURE__ */ jsx(ManagerHint, { children: "Schema options (gray) are read-only. Dynamic options can be removed." })
       ] }),
       /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexWrap: "wrap" }, children: [
-        schemaEnumValues.map((val) => /* @__PURE__ */ jsx(SchemaChip, { title: "Defined in schema (read-only)", children: val }, `schema-${val}`)),
-        dbOptions.filter((val) => !schemaValueSet.has(val)).map((val) => /* @__PURE__ */ jsxs(OptionChip, { children: [
+        schemaEnumValues.filter((val) => !dbOptions.includes(val)).map((val) => /* @__PURE__ */ jsx(SchemaChip, { title: "Defined in schema (read-only)", children: val }, `schema-${val}`)),
+        dbOptions.map((val) => /* @__PURE__ */ jsxs(OptionChip, { children: [
           val,
           /* @__PURE__ */ jsx(RemoveBtn, { onClick: () => handleRemoveDbOption(val), title: `Remove "${val}"`, children: /* @__PURE__ */ jsx(C5, { width: 10, height: 10 }) })
         ] }, `db-${val}`))
@@ -59792,7 +59792,7 @@ const index = {
         defaultMessage: "Single-select with ability to add new enum values dynamically. Merges schema options + DB options."
       },
       components: {
-        Input: async () => import("./DynamicEnumInput-DdMALdoj.mjs").then((m3) => ({
+        Input: async () => import("./DynamicEnumInput-5yRi-TNb.mjs").then((m3) => ({
           default: m3.default
         }))
       },

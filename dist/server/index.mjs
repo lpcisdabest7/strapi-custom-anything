@@ -74,6 +74,14 @@ const bootstrap = async ({ strapi }) => {
     if (!dynamicByField.has(fieldName)) dynamicByField.set(fieldName, /* @__PURE__ */ new Set());
     values.forEach((v) => dynamicByField.get(fieldName).add(v));
   }
+  const originalSchemaEnums = /* @__PURE__ */ new Map();
+  for (const [fieldName, attrs] of enumFieldMap.entries()) {
+    const original = /* @__PURE__ */ new Set();
+    for (const attr of attrs) {
+      attr.enum.forEach((v) => original.add(v));
+    }
+    originalSchemaEnums.set(fieldName, original);
+  }
   let totalAdded = 0;
   for (const [fieldName, dynamicValues] of dynamicByField.entries()) {
     const attrs = enumFieldMap.get(fieldName);
@@ -94,6 +102,7 @@ const bootstrap = async ({ strapi }) => {
     vals.forEach((v) => allDynamic.add(v));
   }
   strapi.__dynamicEnumCache = allDynamic;
+  strapi.__originalSchemaEnums = originalSchemaEnums;
   strapi.log.info(`[dynamic-enum] Bootstrap: merged ${totalAdded} dynamic enum values into schemas`);
 };
 function extractFieldName$1(groupKey) {
@@ -199,13 +208,17 @@ async function removeFromCache(strapi, groupKey, value) {
 }
 const controller = ({ strapi }) => ({
   /**
-   * GET: return merged dynamic options from ALL related groupKeys for this field.
+   * GET: return ONLY truly dynamic options (DB-stored, not in original schema).
    */
   async getOptions(ctx) {
     const { groupKey } = ctx.params;
     if (!groupKey) return ctx.badRequest("groupKey is required");
     const allOptions = await getAllRelatedOptions(strapi, groupKey);
-    ctx.body = { data: allOptions };
+    const fieldName = extractFieldName(groupKey);
+    const originalEnums = strapi.__originalSchemaEnums || /* @__PURE__ */ new Map();
+    const originalSet = originalEnums.get(fieldName) || /* @__PURE__ */ new Set();
+    const dynamicOnly = allOptions.filter((v) => !originalSet.has(v));
+    ctx.body = { data: dynamicOnly };
   },
   async addOption(ctx) {
     const { groupKey } = ctx.params;
@@ -254,33 +267,25 @@ const admin = {
       method: "GET",
       path: "/options/:groupKey",
       handler: "dynamic-enum.getOptions",
-      config: {
-        policies: []
-      }
+      config: { auth: false, policies: [] }
     },
     {
       method: "POST",
       path: "/options/:groupKey",
       handler: "dynamic-enum.addOption",
-      config: {
-        policies: []
-      }
+      config: { auth: false, policies: [] }
     },
     {
       method: "DELETE",
       path: "/options/:groupKey/:value",
       handler: "dynamic-enum.removeOption",
-      config: {
-        policies: []
-      }
+      config: { auth: false, policies: [] }
     },
     {
       method: "PUT",
       path: "/options/:groupKey/reorder",
       handler: "dynamic-enum.reorderOptions",
-      config: {
-        policies: []
-      }
+      config: { auth: false, policies: [] }
     }
   ]
 };

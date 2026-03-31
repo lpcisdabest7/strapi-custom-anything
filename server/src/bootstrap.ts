@@ -65,6 +65,16 @@ const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
     values.forEach((v) => dynamicByField.get(fieldName)!.add(v));
   }
 
+  // Step 3.5: Snapshot original schema enums BEFORE mutation
+  const originalSchemaEnums: Map<string, Set<string>> = new Map();
+  for (const [fieldName, attrs] of enumFieldMap.entries()) {
+    const original = new Set<string>();
+    for (const attr of attrs) {
+      (attr.enum as string[]).forEach((v) => original.add(v));
+    }
+    originalSchemaEnums.set(fieldName, original);
+  }
+
   // Step 4: Merge dynamic values into ALL matching schema enum arrays
   let totalAdded = 0;
   for (const [fieldName, dynamicValues] of dynamicByField.entries()) {
@@ -89,6 +99,10 @@ const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
     vals.forEach((v) => allDynamic.add(v));
   }
   (strapi as any).__dynamicEnumCache = allDynamic;
+
+  // Store original schema enum values (BEFORE bootstrap mutation) per fieldName
+  // so the controller can filter them out from DB results
+  (strapi as any).__originalSchemaEnums = originalSchemaEnums;
 
   strapi.log.info(`[dynamic-enum] Bootstrap: merged ${totalAdded} dynamic enum values into schemas`);
 };
