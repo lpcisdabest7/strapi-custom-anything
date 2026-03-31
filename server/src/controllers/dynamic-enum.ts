@@ -52,6 +52,9 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     options.push(trimmedValue);
     await setStoredOptions(strapi, groupKey, options);
 
+    // Also merge into in-memory schema so server-side validation accepts the new value
+    mergeValueIntoSchema(strapi, groupKey, trimmedValue);
+
     ctx.body = { data: options };
   },
 
@@ -64,6 +67,10 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     const filtered = options.filter((opt) => opt !== decodedValue);
 
     await setStoredOptions(strapi, groupKey, filtered);
+
+    // Remove from in-memory schema enum (only if it was a dynamic value, not schema-defined)
+    removeValueFromSchema(strapi, groupKey, decodedValue);
+
     ctx.body = { data: filtered };
   },
 
@@ -78,5 +85,62 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     ctx.body = { data: options };
   },
 });
+
+/**
+ * Resolve ALL matching schema enum attributes for a groupKey.
+ * Handles both formats:
+ *   - "uid::fieldName" → single specific component/content-type
+ *   - "fieldName" (plain) → ALL components/content-types with that enum field
+ */
+function resolveAllSchemaAttributes(strapi: Core.Strapi, groupKey: string): any[] {
+  const sepIdx = groupKey.lastIndexOf('::');
+
+  if (sepIdx !== -1) {
+    // Format: "uid::fieldName"
+    const uid = groupKey.substring(0, sepIdx);
+    const fieldName = groupKey.substring(sepIdx + 2);
+    const schema = strapi.components?.[uid] || strapi.contentTypes?.[uid as any];
+    const attr = schema?.attributes?.[fieldName];
+    return attr?.type === 'enumeration' && Array.isArray(attr.enum) ? [attr] : [];
+  }
+
+  // Plain field name → find ALL matching enum fields across components & content-types
+  const fieldName = groupKey;
+  const results: any[] = [];
+
+  for (const component of Object.values(strapi.components || {})) {
+    const attr = (component as any)?.attributes?.[fieldName];
+    if (attr?.type === 'enumeration' && Array.isArray(attr.enum)) {
+      results.push(attr);
+    }
+  }
+  for (const ct of Object.values(strapi.contentTypes || {})) {
+    const attr = (ct as any)?.attributes?.[fieldName];
+    if (attr?.type === 'enumeration' && Array.isArray(attr.enum)) {
+      results.push(attr);
+    }
+  }
+
+  return results;
+}
+
+function mergeValueIntoSchema(strapi: Core.Strapi, groupKey: string, value: string) {
+  const attrs = resolveAllSchemaAttributes(strapi, groupKey);
+  for (const attr of attrs) {
+    if (!attr.enum.includes(value)) {
+      attr.enum.push(value);
+    }
+  }
+}
+
+function removeValueFromSchema(strapi: Core.Strapi, groupKey: string, value: string) {
+  const attrs = resolveAllSchemaAttributes(strapi, groupKey);
+  for (const attr of attrs) {
+    const idx = attr.enum.indexOf(value);
+    if (idx !== -1) {
+      attr.enum.splice(idx, 1);
+    }
+  }
+}
 
 export default controller;

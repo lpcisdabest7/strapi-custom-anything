@@ -17,10 +17,41 @@ import styled from 'styled-components';
 
 const PLUGIN_API = 'dynamic-enum';
 
-function extractGroupKey(name: string): string {
+/**
+ * Try to get the component UID from Strapi's ComponentContext.
+ * This allows grouping by component type (e.g., vsl-common.preview)
+ * so all instances of the same component share dynamic options.
+ */
+let _useComponent: any = null;
+try {
+  const mod = require('@strapi/content-manager/strapi-admin');
+  _useComponent = mod?.useComponent;
+} catch {}
+
+/**
+ * Build groupKey based on component UID + field name.
+ * e.g., "vsl-common.preview::role" → all vsl-common.preview instances share "role" options.
+ * Falls back to last field segment if no component context.
+ */
+function useGroupKey(name: string): string {
+  let componentUid: string | undefined;
+  try {
+    if (_useComponent) {
+      componentUid = _useComponent('EnhancedEnumeration', (state: any) => state.uid);
+    }
+  } catch {}
+
+  // Extract just the field name (last non-numeric segment)
   const parts = name.split('.');
-  const nonNumeric = parts.filter((p) => isNaN(Number(p)));
-  return nonNumeric.join('_') || name;
+  const fieldName = parts.filter((p) => isNaN(Number(p))).pop() || name;
+
+  if (componentUid) {
+    // e.g., "vsl-common.preview::role"
+    return `${componentUid}::${fieldName}`;
+  }
+
+  // Fallback for top-level fields (not inside a component)
+  return fieldName;
 }
 
 /**
@@ -173,7 +204,7 @@ const EnhancedEnumeration = ({
 }: any) => {
   const { formatMessage } = useIntl();
   const field = useField(name);
-  const groupKey = extractGroupKey(name);
+  const groupKey = useGroupKey(name);
 
   const [dbOptions, setDbOptions] = useState<string[]>([]);
   const [newValue, setNewValue] = useState('');

@@ -59519,10 +59519,26 @@ const DynamicEnumIcon = () => {
   return /* @__PURE__ */ jsxRuntime.jsx(IconBox, { justifyContent: "center", alignItems: "center", width: 7, height: 6, hasRadius: true, "aria-hidden": true, children: /* @__PURE__ */ jsxRuntime.jsx(cn$1, {}) });
 };
 const PLUGIN_API = "dynamic-enum";
-function extractGroupKey(name2) {
+let _useComponent = null;
+try {
+  const mod = require("@strapi/content-manager/strapi-admin");
+  _useComponent = mod?.useComponent;
+} catch {
+}
+function useGroupKey(name2) {
+  let componentUid;
+  try {
+    if (_useComponent) {
+      componentUid = _useComponent("EnhancedEnumeration", (state) => state.uid);
+    }
+  } catch {
+  }
   const parts = name2.split(".");
-  const nonNumeric = parts.filter((p2) => isNaN(Number(p2)));
-  return nonNumeric.join("_") || name2;
+  const fieldName = parts.filter((p2) => isNaN(Number(p2))).pop() || name2;
+  if (componentUid) {
+    return `${componentUid}::${fieldName}`;
+  }
+  return fieldName;
 }
 function getAuthHeaders() {
   try {
@@ -59657,7 +59673,7 @@ const EnhancedEnumeration = ({
 }) => {
   const { formatMessage } = reactIntl.useIntl();
   const field = admin.useField(name2);
-  const groupKey = extractGroupKey(name2);
+  const groupKey = useGroupKey(name2);
   const [dbOptions, setDbOptions] = m$1.useState([]);
   const [newValue, setNewValue] = m$1.useState("");
   const [showManager, setShowManager] = m$1.useState(false);
@@ -59810,7 +59826,7 @@ const index = {
         defaultMessage: "Single-select with ability to add new enum values dynamically. Merges schema options + DB options."
       },
       components: {
-        Input: async () => Promise.resolve().then(() => require("./DynamicEnumInput-CBFjxQVP.js")).then((m3) => ({
+        Input: async () => Promise.resolve().then(() => require("./DynamicEnumInput-CR4KN6ES.js")).then((m3) => ({
           default: m3.default
         }))
       },

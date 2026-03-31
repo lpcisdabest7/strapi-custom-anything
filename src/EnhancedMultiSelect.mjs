@@ -215,11 +215,28 @@ const EmptyText = styled.span`
   font-size: 13px;
 `;
 
-/* ─── Helper: extract field name from path ─── */
-function extractGroupKey(name) {
+/* ─── Helper: get component UID from Strapi context ─── */
+let _useComponent = null;
+try {
+  const mod = require('@strapi/content-manager/strapi-admin');
+  _useComponent = mod?.useComponent;
+} catch {}
+
+function useGroupKey(name) {
+  let componentUid;
+  try {
+    if (_useComponent) {
+      componentUid = _useComponent('EnhancedMultiSelect', (state) => state.uid);
+    }
+  } catch {}
+
   const parts = name.split('.');
-  const nonNumeric = parts.filter(p => isNaN(Number(p)));
-  return nonNumeric.join('_') || name;
+  const fieldName = parts.filter(p => isNaN(Number(p))).pop() || name;
+
+  if (componentUid) {
+    return `${componentUid}::${fieldName}`;
+  }
+  return fieldName;
 }
 
 /* ─── Main Component ─── */
@@ -238,7 +255,7 @@ const EnhancedMultiSelect = ({
   const { onChange, value, error } = useField(name);
   const { get, post, del } = useFetchClient();
 
-  const groupKey = extractGroupKey(name);
+  const groupKey = useGroupKey(name);
 
   const [dbOptions, setDbOptions] = useState([]);
   const [newValue, setNewValue] = useState('');
