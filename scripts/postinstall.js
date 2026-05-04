@@ -50,6 +50,12 @@ const COPY_PATCHES = [
     label: 'multi-select admin/index.mjs (enhanced with dynamic option adding)',
     optional: true,
   },
+  {
+    src: resolve(__dirname, '..', 'src', 'patches', 'CellContent.mjs'),
+    dest: join(nodeModules, '@strapi', 'content-manager', 'dist', 'admin', 'pages', 'ListView', 'components', 'TableCells', 'CellContent.mjs'),
+    label: 'CellContent.mjs (list view component title display)',
+    optional: true,
+  },
 ];
 
 let applied = 0;
