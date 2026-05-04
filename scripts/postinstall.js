@@ -56,6 +56,12 @@ const COPY_PATCHES = [
     label: 'CellContent.mjs (list view component title display)',
     optional: true,
   },
+  {
+    src: resolve(__dirname, '..', 'src', 'patches', 'Repeatable.mjs'),
+    dest: join(nodeModules, '@strapi', 'content-manager', 'dist', 'admin', 'pages', 'EditView', 'components', 'FormInputs', 'Component', 'Repeatable.mjs'),
+    label: 'Repeatable.mjs (edit view component label display)',
+    optional: true,
+  },
 ];
 
 let applied = 0;
