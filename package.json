@@ -8,7 +8,6 @@
   "exports": {
     "./package.json": "./package.json",
     "./EnhancedMultiSelect": "./src/EnhancedMultiSelect.mjs",
-    "./list-flatten": "./src/list-flatten.mjs",
     "./strapi-admin": {
       "types": "./dist/admin/src/index.d.ts",
       "source": "./admin/src/index.ts",
